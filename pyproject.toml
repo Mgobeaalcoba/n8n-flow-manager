@@ -1,11 +1,14 @@
 [tool.poetry]
 name = "n8n-flow-manager"
-version = "0.1.0"
+version = "0.1.2"
 description = "A robust SDK and CLI for n8n workflow automation with DevOps capabilities"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Mariano Gobea <gobeamariano@gmail.com>"]
 readme = "README.md"
 license = "MIT"
-keywords = ["n8n", "automation", "workflow", "devops", "cli"]
+keywords = ["n8n", "automation", "workflow", "devops", "cli", "async", "api"]
+homepage = "https://github.com/Mgobeaalcoba/n8n-flow-manager"
+repository = "https://github.com/Mgobeaalcoba/n8n-flow-manager"
+documentation = "https://github.com/Mgobeaalcoba/n8n-flow-manager#readme"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -14,6 +17,9 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Systems Administration",
+    "Framework :: AsyncIO",
 ]
 packages = [{include = "n8n_manager", from = "src"}]
 

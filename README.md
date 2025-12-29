@@ -2,8 +2,11 @@
 
 **n8n-flow-manager** is a robust, production-ready Python SDK and CLI for the [n8n automation platform](https://n8n.io/). Unlike simple HTTP wrappers, this package is designed for **DevOps workflows**, providing type-safe models, async operations, workflow templating, and CI/CD integration capabilities.
 
+[![PyPI version](https://badge.fury.io/py/n8n-flow-manager.svg)](https://pypi.org/project/n8n-flow-manager/)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://img.shields.io/badge/tests-79%20passed-success)](https://github.com/Mgobeaalcoba/n8n-flow-manager)
+[![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)](https://github.com/Mgobeaalcoba/n8n-flow-manager)
 
 ---
 
@@ -66,20 +69,56 @@ n8n-flow-manager/
 ### Requirements
 
 - Python 3.9 or higher
-- Poetry (recommended) or pip
+- n8n instance (cloud or self-hosted)
 
-### Install from Source
+### Option 1: Install from PyPI (Recommended)
+
+```bash
+# Install with pip
+pip install n8n-flow-manager
+
+# Verify installation
+n8n-py --version
+
+# Configure and use
+export N8N_API_KEY="your_api_key"
+export N8N_BASE_URL="https://your-instance.n8n.cloud"
+n8n-py health
+```
+
+### Option 2: Install with Poetry
+
+```bash
+# Add to your project
+poetry add n8n-flow-manager
+
+# Use in your code
+from n8n_manager import N8NClient
+```
+
+### Option 3: Install CLI Globally with pipx
+
+```bash
+# Best for CLI-only usage
+pipx install n8n-flow-manager
+
+# Use anywhere
+n8n-py health
+n8n-py list-workflows
+```
+
+### Option 4: Install from Source (For Development)
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/n8n-flow-manager.git
+git clone https://github.com/Mgobeaalcoba/n8n-flow-manager.git
 cd n8n-flow-manager
 
-# Install with Poetry (recommended)
+# Install with Poetry
 poetry install --with dev
 ```
 
-### Install CLI Globally (Use `n8n-py` anywhere)
+### Install CLI Globally (Alternative Method)
 
 ```bash
 # Create wrapper script
@@ -102,26 +141,35 @@ n8n-py list-workflows
 
 ### Configuration
 
+After installation, configure your n8n credentials:
+
+#### Method 1: Environment Variables (Recommended)
+
+```bash
+export N8N_API_KEY="your_api_key_here"
+export N8N_BASE_URL="https://your-instance.n8n.cloud"
+
+# Test connection
+n8n-py health
+```
+
+#### Method 2: .env File
+
 Create a `.env` file in your project root:
 
 ```bash
 N8N_API_KEY=your_api_key_here
-N8N_BASE_URL=https://n8n.example.com
-```
-
-Or export as environment variables:
-
-```bash
-export N8N_API_KEY="your_api_key_here"
-export N8N_BASE_URL="https://n8n.example.com"
+N8N_BASE_URL=https://your-instance.n8n.cloud
 ```
 
 #### Getting Your API Key
 
 1. Open your n8n instance
 2. Go to **Settings** → **API**
-3. Generate a new API key
-4. Copy and save it securely
+3. Click **Create API Key**
+4. Copy the key and use it in configuration above
+
+**That's it!** You're ready to use n8n-flow-manager 🎉
 
 ---
 

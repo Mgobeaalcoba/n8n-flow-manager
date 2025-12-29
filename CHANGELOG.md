@@ -50,3 +50,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Workflow comparison and diff tools
 - Export/import with dependency resolution
 - Workflow versioning support
+## [0.1.1] - 2025-12-29
+
+### Fixed
+- Corrected repository URLs to https://github.com/Mgobeaalcoba/n8n-flow-manager
+
+
+## [0.1.2] - $(date +%Y-%m-%d)
+
+### Fixed
+- Corrected repository URLs in package metadata
+- Updated README with PyPI installation as primary option
