@@ -164,3 +164,8 @@ test_single_workflow.json
 debug_api_response.py
 debug_crud_payload.py
 FINAL_REPORT.txt
+
+# Markdown files (keep only README.md and CHANGELOG.md)
+*.md
+!README.md
+!CHANGELOG.md

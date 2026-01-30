@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import os
 from pathlib import Path
 from typing import List, Optional
 
@@ -14,6 +15,7 @@ from rich.table import Table
 from ..client import N8NClient
 from ..exceptions import N8NError
 from ..utils.templating import load_workflow_from_file, save_workflow_to_file
+from .. import __version__
 
 app = typer.Typer(
     name="n8n-py",
@@ -21,6 +23,31 @@ app = typer.Typer(
     add_completion=False,
 )
 console = Console()
+
+
+def version_callback(ctx: typer.Context, value: bool) -> None:
+    """Show version and exit."""
+    if value:
+        console.print(f"n8n-py version {__version__}")
+        raise typer.Exit(0)
+
+
+@app.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,
+    version: bool = typer.Option(
+        False,
+        "--version",
+        help="Show version and exit",
+        is_eager=True,
+    ),
+) -> None:
+    """
+    n8n-flow-manager CLI - Manage n8n workflows from the command line.
+    """
+    if version:
+        console.print(f"n8n-py version {__version__}")
+        raise typer.Exit(0)
 
 
 def get_client(
@@ -374,6 +401,143 @@ def health(
             raise typer.Exit(code=1)
 
     asyncio.run(_health())
+
+
+@app.command()
+def config(
+    shell: Optional[str] = typer.Option(
+        None,
+        "--shell",
+        help="Shell to configure (zsh/bash). Auto-detected if not specified.",
+    ),
+    local_only: bool = typer.Option(
+        False,
+        "--local-only",
+        help="Only create .env file, don't modify shell config",
+    ),
+) -> None:
+    """
+    Configure n8n credentials interactively.
+
+    This command helps you set up N8N_API_KEY and N8N_BASE_URL by:
+    1. Prompting for credentials
+    2. Adding them to your shell config (~/.zshrc or ~/.bashrc)
+    3. Optionally creating a .env file in the current directory
+    """
+    console.print("\n[bold cyan]🔧 n8n-flow-manager Configuration[/bold cyan]\n")
+
+    # Get credentials from user
+    console.print("[yellow]Enter your n8n credentials:[/yellow]\n")
+
+    api_key = typer.prompt("N8N_API_KEY", hide_input=True)
+    base_url = typer.prompt(
+        "N8N_BASE_URL",
+        default="https://your-instance.n8n.cloud",
+    )
+
+    if not api_key or not base_url:
+        console.print("[red]✗ API key and base URL are required[/red]")
+        raise typer.Exit(code=1)
+
+    # Determine shell if not specified
+    if not shell and not local_only:
+        detected_shell = os.environ.get("SHELL", "")
+        if "zsh" in detected_shell:
+            shell = "zsh"
+        elif "bash" in detected_shell:
+            shell = "bash"
+        else:
+            console.print(
+                f"[yellow]⚠ Could not detect shell ({detected_shell}). "
+                "Using .env file only.[/yellow]"
+            )
+            local_only = True
+
+    # Ask user preference
+    if not local_only:
+        console.print(
+            f"\n[cyan]Where would you like to save the credentials?[/cyan]\n"
+            f"  1. Shell config (~/.{shell}rc) - Global for all projects\n"
+            f"  2. .env file (current directory) - Local to this project\n"
+            f"  3. Both\n"
+        )
+        choice = typer.prompt("Enter choice", type=int, default=1)
+
+        if choice not in [1, 2, 3]:
+            console.print("[red]✗ Invalid choice[/red]")
+            raise typer.Exit(code=1)
+
+        save_to_shell = choice in [1, 3]
+        save_to_env = choice in [2, 3]
+    else:
+        save_to_shell = False
+        save_to_env = True
+
+    # Save to shell config
+    if save_to_shell:
+        shell_config = Path.home() / f".{shell}rc"
+
+        # Check if already configured
+        if shell_config.exists():
+            content = shell_config.read_text()
+            if "N8N_API_KEY" in content or "N8N_BASE_URL" in content:
+                console.print(
+                    f"\n[yellow]⚠ Credentials already exist in {shell_config}[/yellow]"
+                )
+                overwrite = typer.confirm("Overwrite existing credentials?", default=False)
+                if not overwrite:
+                    console.print("[yellow]Skipping shell config update[/yellow]")
+                    save_to_shell = False
+
+        if save_to_shell:
+            # Append to shell config
+            with open(shell_config, "a") as f:
+                f.write(f"\n# n8n-flow-manager credentials (added by n8n-py config)\n")
+                f.write(f'export N8N_API_KEY="{api_key}"\n')
+                f.write(f'export N8N_BASE_URL="{base_url}"\n')
+
+            console.print(f"\n[green]✓ Credentials saved to {shell_config}[/green]")
+            console.print(
+                f"[yellow]Run 'source ~/.{shell}rc' or restart your terminal "
+                "to load the credentials[/yellow]"
+            )
+
+    # Save to .env file
+    if save_to_env:
+        env_file = Path(".env")
+
+        if env_file.exists():
+            console.print(f"\n[yellow]⚠ .env file already exists[/yellow]")
+            overwrite = typer.confirm("Overwrite existing .env file?", default=False)
+            if not overwrite:
+                console.print("[yellow]Skipping .env file creation[/yellow]")
+                save_to_env = False
+
+        if save_to_env:
+            with open(env_file, "w") as f:
+                f.write(f"# n8n-flow-manager credentials\n")
+                f.write(f'N8N_API_KEY="{api_key}"\n')
+                f.write(f'N8N_BASE_URL="{base_url}"\n')
+
+            console.print(f"\n[green]✓ Credentials saved to {env_file.absolute()}[/green]")
+
+    # Test connection
+    console.print("\n[cyan]Testing connection...[/cyan]")
+
+    async def _test() -> None:
+        try:
+            async with get_client(api_key, base_url) as client:
+                healthy = await client.health_check()
+                if healthy:
+                    console.print("[green]✓ Connection successful![/green]")
+                else:
+                    console.print("[red]✗ Connection failed[/red]")
+        except Exception as e:
+            console.print(f"[red]✗ Connection failed: {str(e)}[/red]")
+
+    asyncio.run(_test())
+
+    console.print("\n[bold green]✓ Configuration complete![/bold green]\n")
 
 
 if __name__ == "__main__":

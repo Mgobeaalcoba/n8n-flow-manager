@@ -16,7 +16,7 @@ from .exceptions import (
 from .models.execution import Execution, ExecutionStatus
 from .models.workflow import Connection, Node, Workflow
 
-__version__ = "0.1.0"
+__version__ = "0.1.3"
 __all__ = [
     "N8NClient",
     "N8NError",

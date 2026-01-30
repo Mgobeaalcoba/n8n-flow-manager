@@ -56,8 +56,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected repository URLs to https://github.com/Mgobeaalcoba/n8n-flow-manager
 
 
-## [0.1.2] - $(date +%Y-%m-%d)
+## [0.1.2] - 2025-12-29
 
 ### Fixed
 - Corrected repository URLs in package metadata
 - Updated README with PyPI installation as primary option
+
+## [0.1.3] - 2026-01-30
+
+### Added
+- New `config` command for interactive credential configuration
+  - Auto-detects shell (zsh/bash)
+  - Saves credentials to shell config or .env file
+  - Tests connection after configuration
+  - Secure input for API key (hidden)
+  - Prevents overwriting without confirmation
+
+### Fixed
+- Fixed `--version` flag implementation (Click 8.3.x compatibility issue)
+- Added Click version constraint (>=8.0.0,<8.2.0) to prevent future issues
+- Synchronized version numbers between pyproject.toml and __init__.py
+- Simplified README installation section to single method (pipx)
+
+### Changed
+- Cleaned up repository markdown files (kept only README.md and CHANGELOG.md)
+- Updated .gitignore to exclude unnecessary markdown files
+- Improved CLI help text and command descriptions
+
+### Documentation
+- Simplified installation instructions to use pipx only
+- Added comprehensive configuration examples
+- Improved getting started guide

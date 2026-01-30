@@ -71,105 +71,74 @@ n8n-flow-manager/
 - Python 3.9 or higher
 - n8n instance (cloud or self-hosted)
 
-### Option 1: Install from PyPI (Recommended)
+### Global CLI Installation (Recommended)
+
+Install globally using **pipx** (the best practice for Python CLI tools):
+
+```bash
+# Install pipx if you don't have it
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+
+# Install n8n-flow-manager globally
+pipx install n8n-flow-manager
+
+# Verify installation
+n8n-py --version
+n8n-py --help
+```
+
+> **Note:** If you don't have pipx, you can also use `pip install --user n8n-flow-manager`, but pipx is recommended as it isolates the package in its own environment.
+
+### Configuration
+
+After installation, configure your n8n credentials using environment variables:
+
+```bash
+# Set your n8n credentials
+export N8N_API_KEY="your_api_key_here"
+export N8N_BASE_URL="https://your-instance.n8n.cloud"
+
+# Test the connection
+n8n-py health
+```
+
+**Optional:** To make credentials persistent, add them to your shell profile:
+
+```bash
+# For zsh (macOS default)
+echo 'export N8N_API_KEY="your_api_key_here"' >> ~/.zshrc
+echo 'export N8N_BASE_URL="https://your-instance.n8n.cloud"' >> ~/.zshrc
+source ~/.zshrc
+
+# For bash
+echo 'export N8N_API_KEY="your_api_key_here"' >> ~/.bashrc
+echo 'export N8N_BASE_URL="https://your-instance.n8n.cloud"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+### Getting Your API Key
+
+1. Open your n8n instance
+2. Go to **Settings** → **API**
+3. Click **Create API Key**
+4. Copy the key and use it in the configuration above
+
+**That's it!** You're ready to use n8n-flow-manager 🎉
+
+### For Developers
+
+If you want to use n8n-flow-manager as a Python library in your projects:
 
 ```bash
 # Install with pip
 pip install n8n-flow-manager
 
-# Verify installation
-n8n-py --version
-
-# Configure and use
-export N8N_API_KEY="your_api_key"
-export N8N_BASE_URL="https://your-instance.n8n.cloud"
-n8n-py health
-```
-
-### Option 2: Install with Poetry
-
-```bash
-# Add to your project
-poetry add n8n-flow-manager
-
 # Use in your code
 from n8n_manager import N8NClient
 ```
 
-### Option 3: Install CLI Globally with pipx
-
-```bash
-# Best for CLI-only usage
-pipx install n8n-flow-manager
-
-# Use anywhere
-n8n-py health
-n8n-py list-workflows
-```
-
-### Option 4: Install from Source (For Development)
-
-```bash
-# Clone the repository
-git clone https://github.com/Mgobeaalcoba/n8n-flow-manager.git
-cd n8n-flow-manager
-
-# Install with Poetry
-poetry install --with dev
-```
-
-### Install CLI Globally (Alternative Method)
-
-```bash
-# Create wrapper script
-mkdir -p ~/.local/bin
-cat > ~/.local/bin/n8n-py << 'EOF'
-#!/bin/bash
-cd /path/to/n8n-flow-manager
-poetry run n8n-py "$@"
-EOF
-chmod +x ~/.local/bin/n8n-py
-
-# Add to PATH (if not already)
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-source ~/.zshrc
-
-# Now use directly anywhere:
-n8n-py health
-n8n-py list-workflows
-```
-
-### Configuration
-
-After installation, configure your n8n credentials:
-
-#### Method 1: Environment Variables (Recommended)
-
-```bash
-export N8N_API_KEY="your_api_key_here"
-export N8N_BASE_URL="https://your-instance.n8n.cloud"
-
-# Test connection
-n8n-py health
-```
-
-#### Method 2: .env File
-
-Create a `.env` file in your project root:
-
-```bash
-N8N_API_KEY=your_api_key_here
-N8N_BASE_URL=https://your-instance.n8n.cloud
-```
-
-#### Getting Your API Key
-
-1. Open your n8n instance
-2. Go to **Settings** → **API**
-3. Click **Create API Key**
-4. Copy the key and use it in configuration above
-
-**That's it!** You're ready to use n8n-flow-manager 🎉
+For contributing or development, see the [Development](#-development) section below.
 
 ---
 
