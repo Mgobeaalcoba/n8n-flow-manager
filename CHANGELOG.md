@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-09-08
+
+### Added
+- `push` command: updates an **existing** workflow from a JSON file, using
+  `WorkflowAPI.update()`. Reads the target ID from the `id` field of the file
+  (as saved by `get-workflow --output` and `backup`) or from `--id`. This
+  enables a pull → edit → push cycle with version control.
+- `delete` command: deletes a workflow, showing its details and asking for
+  confirmation first. `--yes` skips the prompt for CI usage.
+- `list-workflows` now shows an **Archived** column, so archived workflows can
+  be identified from the CLI.
+
+### Fixed
+- `deploy` and `push`: a `typer.Exit` raised for a controlled error was caught
+  by the generic `except Exception` handler and printed as an empty
+  `Error:` line. Controlled exits are now re-raised untouched.
+- `push` detects archived workflows before calling the API and explains that
+  they must be unarchived first, instead of surfacing the raw n8n error.
+
+### Changed
+- `deploy` docstring now states explicitly that it always creates a new
+  workflow, to distinguish it from `push`.
+- README: documents `push`, `delete` and the pre-existing `config` command,
+  and fixes four links that pointed to `github.com/yourusername/...`.
+
 ## [0.1.0] - 2025-12-29
 
 ### Added

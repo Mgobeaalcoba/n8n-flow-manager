@@ -293,6 +293,27 @@ n8n-py deploy template.json --var environment=prod --var timeout=30
 n8n-py deploy workflow.json --activate
 ```
 
+#### Update an Existing Workflow (push)
+
+```bash
+# Pull a workflow to a file
+n8n-py get-workflow <workflow_id> --output workflow.json
+
+# ... edit the file, commit it to Git ...
+
+# Push it back, overwriting the SAME workflow (ID is read from the file)
+n8n-py push workflow.json
+
+# Or target an explicit ID
+n8n-py push workflow.json --id <workflow_id>
+```
+
+> `deploy` always **creates** a new workflow. `push` **updates** an existing one.
+> Use `push` for a pull → edit → push cycle with version control.
+>
+> Archived workflows cannot be updated (n8n restriction). `push` detects this and
+> tells you to unarchive first. `list-workflows` shows an **Archived** column.
+
 #### Backup Workflows
 
 ```bash
@@ -325,6 +346,30 @@ n8n-py activate <workflow_id>
 # Deactivate workflow
 n8n-py deactivate <workflow_id>
 ```
+
+#### Configure Credentials
+
+```bash
+# Interactive setup: prompts for the API key (hidden), writes to
+# your shell config and/or a local .env, and tests the connection
+n8n-py config
+
+# Only create a .env file in the current directory
+n8n-py config --local-only
+```
+
+#### Delete a Workflow
+
+```bash
+# Asks for confirmation, showing name and node count first
+n8n-py delete <workflow_id>
+
+# Skip the prompt (CI)
+n8n-py delete <workflow_id> --yes
+```
+
+> Deletion cannot be undone. Back the workflow up first with
+> `get-workflow --output` or `backup`.
 
 #### Health Check
 
@@ -451,7 +496,7 @@ poetry run pytest tests/test_client.py
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/n8n-flow-manager.git
+git clone https://github.com/Mgobeaalcoba/n8n-flow-manager.git
 cd n8n-flow-manager
 
 # Install with dev dependencies
@@ -476,6 +521,8 @@ poetry run mypy src/
 - [x] CLI with Typer
 - [x] Jinja2 templating
 - [x] Smart execution polling
+- [x] Update existing workflows from the CLI (`push`)
+- [x] Delete workflows from the CLI (`delete`)
 - [ ] Webhook management API
 - [ ] Tag management
 - [ ] Bulk operations
@@ -567,9 +614,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Documentation**: [GitHub Wiki](https://github.com/yourusername/n8n-flow-manager/wiki)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/n8n-flow-manager/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/n8n-flow-manager/discussions)
+- **Documentation**: [GitHub Wiki](https://github.com/Mgobeaalcoba/n8n-flow-manager/wiki)
+- **Issues**: [GitHub Issues](https://github.com/Mgobeaalcoba/n8n-flow-manager/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Mgobeaalcoba/n8n-flow-manager/discussions)
 - **n8n Community**: [n8n Community Forum](https://community.n8n.io/)
 
 ---

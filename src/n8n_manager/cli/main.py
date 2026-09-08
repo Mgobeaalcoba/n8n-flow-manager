@@ -87,13 +87,16 @@ def list_workflows(
                 table.add_column("ID", style="cyan")
                 table.add_column("Name", style="green")
                 table.add_column("Active", style="magenta")
+                table.add_column("Archived", style="yellow")
                 table.add_column("Nodes", style="blue")
 
                 for wf in workflows:
+                    archived = (wf.model_extra or {}).get("isArchived", False)
                     table.add_row(
                         wf.id or "N/A",
                         wf.name,
                         "✓" if wf.active else "✗",
+                        "✓" if archived else "",
                         str(len(wf.nodes)),
                     )
 
@@ -148,7 +151,9 @@ def deploy(
     base_url: Optional[str] = typer.Option(None, "--base-url", envvar="N8N_BASE_URL"),
 ) -> None:
     """
-    Deploy a workflow from a JSON file (supports Jinja2 templates).
+    Deploy a workflow from a JSON file, creating a NEW workflow.
+
+    Always creates a new workflow in n8n. To overwrite an existing one, use `push`.
     """
 
     async def _deploy() -> None:
@@ -191,11 +196,108 @@ def deploy(
         except N8NError as e:
             console.print(f"[red]Error: {e.message}[/red]")
             raise typer.Exit(code=1)
+        except typer.Exit:
+            raise
         except Exception as e:
             console.print(f"[red]Error: {str(e)}[/red]")
             raise typer.Exit(code=1)
 
     asyncio.run(_deploy())
+
+
+@app.command()
+def push(
+    file: Path = typer.Argument(..., help="Workflow JSON file", exists=True),
+    workflow_id: Optional[str] = typer.Option(
+        None,
+        "--id",
+        help="Target workflow ID. If omitted, it is read from the 'id' field of the file.",
+    ),
+    variables: Optional[List[str]] = typer.Option(
+        None,
+        "--var",
+        help="Template variables (format: key=value)",
+    ),
+    api_key: Optional[str] = typer.Option(None, "--api-key", envvar="N8N_API_KEY"),
+    base_url: Optional[str] = typer.Option(None, "--base-url", envvar="N8N_BASE_URL"),
+) -> None:
+    """
+    Update an EXISTING workflow from a JSON file.
+
+    Unlike `deploy`, which always creates a new workflow, `push` overwrites the
+    workflow that already exists in n8n. This is the counterpart of
+    `get-workflow --output` / `backup` and enables a pull -> edit -> push cycle
+    with version control.
+    """
+
+    async def _push() -> None:
+        try:
+            # Parse variables
+            vars_dict = {}
+            if variables:
+                for var in variables:
+                    if "=" not in var:
+                        console.print(f"[red]Invalid variable format: {var}[/red]")
+                        raise typer.Exit(code=1)
+                    key, value = var.split("=", 1)
+                    vars_dict[key.strip()] = value.strip()
+
+            # Load workflow
+            console.print(f"[blue]Loading workflow from {file}...[/blue]")
+            workflow = load_workflow_from_file(file, vars_dict if vars_dict else None)
+
+            target_id = workflow_id or workflow.id
+            if not target_id:
+                console.print(
+                    "[red]Error: no workflow ID found.[/red]\n"
+                    "  The file has no 'id' field. Pass it explicitly with --id <workflow_id>,\n"
+                    "  or use 'n8n-py deploy' if you want to create a new workflow."
+                )
+                raise typer.Exit(code=1)
+
+            # n8n rejects updates on archived workflows. Fail early with a clear
+            # message instead of surfacing the raw API error.
+            if (workflow.model_extra or {}).get("isArchived"):
+                console.print(
+                    f"[red]Error: workflow {target_id} is archived.[/red]\n"
+                    "  n8n does not allow updating archived workflows.\n"
+                    "  Unarchive it in the n8n UI first, or use 'n8n-py deploy' "
+                    "to create a new one."
+                )
+                raise typer.Exit(code=1)
+
+            async with get_client(api_key, base_url) as client:
+                with Progress(
+                    SpinnerColumn(),
+                    TextColumn("[progress.description]{task.description}"),
+                    console=console,
+                ) as progress:
+                    progress.add_task(description="Updating workflow...", total=None)
+                    updated = await client.workflows.update(target_id, workflow)
+
+                console.print(
+                    f"[green]\u2713 Workflow updated successfully![/green]\n"
+                    f"  ID: {updated.id}\n"
+                    f"  Name: {updated.name}"
+                )
+
+        except N8NError as e:
+            if "archived" in str(e.message).lower():
+                console.print(
+                    "[red]Error: cannot update an archived workflow.[/red]\n"
+                    "  Unarchive it in the n8n UI first, or use 'n8n-py deploy' "
+                    "to create a new one."
+                )
+            else:
+                console.print(f"[red]Error: {e.message}[/red]")
+            raise typer.Exit(code=1)
+        except typer.Exit:
+            raise
+        except Exception as e:
+            console.print(f"[red]Error: {str(e)}[/red]")
+            raise typer.Exit(code=1)
+
+    asyncio.run(_push())
 
 
 @app.command()
@@ -367,6 +469,68 @@ def deactivate(
             raise typer.Exit(code=1)
 
     asyncio.run(_deactivate())
+
+
+@app.command()
+def delete(
+    workflow_id: str = typer.Argument(..., help="Workflow ID to delete"),
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        "-y",
+        help="Skip the confirmation prompt (useful in CI)",
+    ),
+    api_key: Optional[str] = typer.Option(None, "--api-key", envvar="N8N_API_KEY"),
+    base_url: Optional[str] = typer.Option(None, "--base-url", envvar="N8N_BASE_URL"),
+) -> None:
+    """
+    Delete a workflow permanently.
+
+    Shows the workflow details and asks for confirmation before deleting.
+    This cannot be undone: back it up first with `get-workflow --output`
+    or `backup` if you may need it later.
+    """
+
+    async def _delete() -> None:
+        try:
+            async with get_client(api_key, base_url) as client:
+                # Fetch first so the user sees what is about to be deleted
+                workflow = await client.workflows.get(workflow_id)
+
+                if not yes:
+                    console.print(
+                        f"[yellow]About to delete workflow:[/yellow]\n"
+                        f"  ID: {workflow.id}\n"
+                        f"  Name: {workflow.name}\n"
+                        f"  Nodes: {len(workflow.nodes)}\n"
+                        f"  Active: {'yes' if workflow.active else 'no'}"
+                    )
+                    if not typer.confirm("This cannot be undone. Continue?", default=False):
+                        console.print("[yellow]Aborted, nothing was deleted.[/yellow]")
+                        raise typer.Exit(code=0)
+
+                with Progress(
+                    SpinnerColumn(),
+                    TextColumn("[progress.description]{task.description}"),
+                    console=console,
+                ) as progress:
+                    progress.add_task(description="Deleting workflow...", total=None)
+                    await client.workflows.delete(workflow_id)
+
+                console.print(
+                    f"[green]\u2713 Workflow '{workflow.name}' ({workflow_id}) deleted[/green]"
+                )
+
+        except N8NError as e:
+            console.print(f"[red]Error: {e.message}[/red]")
+            raise typer.Exit(code=1)
+        except typer.Exit:
+            raise
+        except Exception as e:
+            console.print(f"[red]Error: {str(e)}[/red]")
+            raise typer.Exit(code=1)
+
+    asyncio.run(_delete())
 
 
 @app.command()

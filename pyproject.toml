@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "n8n-flow-manager"
-version = "0.1.3"
+version = "0.1.4"
 description = "A robust SDK and CLI for n8n workflow automation with DevOps capabilities"
 authors = ["Mariano Gobea <gobeamariano@gmail.com>"]
 readme = "README.md"
