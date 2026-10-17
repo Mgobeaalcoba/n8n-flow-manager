@@ -7,7 +7,7 @@
 ## State
 
 - Python SDK & CLI for n8n (PyPI, poetry, make targets, 79+ tests).
-- Agentified on 2026-10-17: AGENTS.md, multi-agent bridges (CLAUDE.md, GEMINI.md, .github/copilot-instructions.md), this memory (STATE.md + LOG.md) and scripts/scan_secrets.py (hook not installed: pre-existing findings to review). No sessions recorded yet.
+- Agentified on 2026-10-17: AGENTS.md, multi-agent bridges (CLAUDE.md, GEMINI.md, .github/copilot-instructions.md), this memory (STATE.md + LOG.md) and scripts/scan_secrets.py (pre-commit hook installed on 2026-10-17; findings reviewed: placeholders/test fixtures, not real credentials). History in `LOG.md`.
 
 ## Next step
 
@@ -15,7 +15,7 @@
 
 ## Pending
 
-- [ ] Resolve the secret-scan findings and then install the hook — `README.md`, `tests/test_client.py`, `tests/test_client_complete.py`, `src/n8n_manager/cli/main.py` (placeholders and test fixtures).
+- [x] Secret-scan findings reviewed (placeholders/test fixtures) and pre-commit hook installed — 2026-10-17. Allowlist: `scripts/secret_scan_allowlist.txt`.
 
 ## Blockers
 
